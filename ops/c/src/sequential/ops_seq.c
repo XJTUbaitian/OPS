@@ -83,7 +83,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 //    dat->data = (char *)_mm_malloc(bytes, 2*1024*1024); // initialize data bits to 0
     posix_memalign((void**)&(dat->data), 2*1024*1024, bytes);
 #else
-    dat->data = (char *)calloc(bytes, 1); // initialize data bits to 0
+    dat->data = (char *)ops_malloc(bytes); // initialize data bits to 0
 #endif
     dat->user_managed = 0;
     dat->mem = bytes;
@@ -132,7 +132,7 @@ void ops_halo_transfer(ops_halo_group group) {
     for (int i = 1; i < halo->from->block->dims; i++)
       size *= halo->iter_size[i];
     if (size > ops_halo_buffer_size) {
-      ops_halo_buffer = (char *)realloc(ops_halo_buffer, size);
+      ops_halo_buffer = (char *)ops_realloc(ops_halo_buffer, size);
       ops_halo_buffer_size = size;
     }
 

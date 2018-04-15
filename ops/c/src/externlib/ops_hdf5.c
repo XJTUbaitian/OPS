@@ -831,7 +831,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   int t_size = 1;
   for (int d = 0; d < block->dims; d++)
     t_size *= read_size[d] - read_d_m[d] + read_d_p[d];
-  char *data = (char *)malloc(t_size * dat_dim * type_size);
+  char *data = (char *)ops_malloc(t_size * dat_dim * type_size);
 
   if (strcmp(read_type, "double") == 0)
     H5LTread_dataset(group_id, dat_name, H5T_NATIVE_DOUBLE, data);
@@ -910,7 +910,7 @@ char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
   int t_size = 1;
   for (int d = 0; d < dat->block->dims; d++)
     t_size *= dat->size[d];
-  u_dat = (char *)malloc(t_size * dat->elem_size);
+  u_dat = (char *)ops_malloc(t_size * dat->elem_size);
   memcpy(u_dat, dat->data, t_size * dat->elem_size);
   return (u_dat);
 }

@@ -53,6 +53,10 @@
 #include "ops_macros.h"
 #include "ops_util.h"
 
+#ifndef OPS_ALIGNMENT
+#define OPS_ALIGNMENT 32
+#endif
+
 /*
 * enum list for ops_par_loop
 */
@@ -462,11 +466,20 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
 int ops_get_proc();
 int ops_num_procs();
 
+/*******************************************************************************
+* Memory allocation functions
+*******************************************************************************/
+void* ops_malloc (size_t size);
+void* ops_realloc (void *ptr, size_t size);
+void  ops_free (void *ptr);
+void* ops_calloc (size_t num, size_t size);
+
 #ifdef __cplusplus
 }
 #endif
 
 #include "ops_checkpointing.h"
 #include "ops_hdf5.h"
+#include "ops_tridiag.h"
 
 #endif /* __OP_LIB_CORE_H */

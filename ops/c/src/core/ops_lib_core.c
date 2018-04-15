@@ -39,6 +39,7 @@
 #include "ops_lib_core.h"
 #include <float.h>
 #include <limits.h>
+#include <malloc.h>
 #include <sys/time.h>
 #include <sys/time.h>
 
@@ -87,7 +88,7 @@ double ops_sendrecv_time = 0.0;
 */
 static char *copy_str(char const *src) {
   const size_t len = strlen(src) + 1;
-  char *dest = (char *)calloc(len+16, sizeof(char));
+  char *dest = (char *)ops_calloc(len, sizeof(char));
   return strncpy(dest, src, len);
 }
 
@@ -339,8 +340,7 @@ ops_block ops_decl_block(int dims, const char *name) {
 
   if (OPS_block_index == OPS_block_max) {
     if (OPS_block_max > 0) printf("Warning: potential realloc issue in ops_lib_core.c detected, please modify ops_decl_block to allocate more blocks initially!\n");
-    OPS_block_max += 30;
-    OPS_block_list = (ops_block_descriptor *)realloc(
+    OPS_block_list = (ops_block_descriptor *)ops_realloc(
         OPS_block_list, OPS_block_max * sizeof(ops_block_descriptor));
 
     if (OPS_block_list == NULL) {
@@ -349,7 +349,7 @@ ops_block ops_decl_block(int dims, const char *name) {
     }
   }
 
-  ops_block block = (ops_block)xmalloc(sizeof(ops_block_core));
+  ops_block block = (ops_block)ops_malloc(sizeof(ops_block_core));
   block->index = OPS_block_index;
   block->dims = dims;
   block->name = copy_str(name);
@@ -385,7 +385,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
     exit(-1);
   }
 
-  ops_dat dat = (ops_dat)xmalloc(sizeof(ops_dat_core));
+  ops_dat dat = (ops_dat)ops_malloc(sizeof(ops_dat_core));
   dat->index = OPS_dat_index;
   dat->block = block;
   dat->dim = dim;
@@ -410,10 +410,23 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   for (int n = 0; n < block->dims; n++)
     dat->base[n] = base[n];
 
-  for (int n = 0; n < block->dims; n++)
-    dat->d_m[n] = d_m[n];
-  for (int n = 0; n < block->dims; n++)
-    dat->d_p[n] = d_p[n];
+  for (int n = 0; n < block->dims; n++) {
+    if (d_m[n] <= 0)
+      dat->d_m[n] = d_m[n];
+    else {
+      ops_printf("Error: Non negative d_m during declaration of %s\n", name);
+      exit(2);
+    }
+  }
+
+  for (int n = 0; n < block->dims; n++) {
+    if (d_p[n] >= 0)
+      dat->d_p[n] = d_p[n];
+    else {
+      ops_printf("Error: Non positive d_p during declaration of %s\n", name);
+      exit(2);
+    }
+  }
 
   // set the size of higher dimensions to 1
   for (int n = block->dims; n < OPS_MAX_DIM; n++) {
@@ -436,7 +449,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   ops_dat_entry *item;
 
   // add the newly created ops_dat to list
-  item = (ops_dat_entry *)malloc(sizeof(ops_dat_entry));
+  item = (ops_dat_entry *)ops_malloc(sizeof(ops_dat_entry));
   if (item == NULL) {
     printf("Error: op_decl_dat -- error allocating memory to double linked "
            "list entry\n");
@@ -449,7 +462,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   OPS_dat_index++;
 
   // Another entry for a different list
-  item = (ops_dat_entry *)malloc(sizeof(ops_dat_entry));
+  item = (ops_dat_entry *)ops_malloc(sizeof(ops_dat_entry));
   if (item == NULL) {
     printf("Error: op_decl_dat -- error allocating memory to double linked "
            "list entry\n");
@@ -484,7 +497,7 @@ ops_stencil ops_decl_stencil(int dims, int points, int *sten,
 
   if (OPS_stencil_index == OPS_stencil_max) {
     OPS_stencil_max += 10;
-    OPS_stencil_list = (ops_stencil *)realloc(
+    OPS_stencil_list = (ops_stencil *)ops_realloc(
         OPS_stencil_list, OPS_stencil_max * sizeof(ops_stencil));
 
     if (OPS_stencil_list == NULL) {
@@ -493,16 +506,16 @@ ops_stencil ops_decl_stencil(int dims, int points, int *sten,
     }
   }
 
-  ops_stencil stencil = (ops_stencil)xmalloc(sizeof(ops_stencil_core));
+  ops_stencil stencil = (ops_stencil)ops_malloc(sizeof(ops_stencil_core));
   stencil->index = OPS_stencil_index;
   stencil->points = points;
   stencil->dims = dims;
   stencil->name = copy_str(name);
 
-  stencil->stencil = (int *)xmalloc(dims * points * sizeof(int));
+  stencil->stencil = (int *)ops_malloc(dims * points * sizeof(int));
   memcpy(stencil->stencil, sten, sizeof(int) * dims * points);
 
-  stencil->stride = (int *)xmalloc(dims * sizeof(int));
+  stencil->stride = (int *)ops_malloc(dims * sizeof(int));
   for (int i = 0; i < dims; i++)
     stencil->stride[i] = 1;
 
@@ -516,7 +529,7 @@ ops_stencil ops_decl_strided_stencil(int dims, int points, int *sten,
 
   if (OPS_stencil_index == OPS_stencil_max) {
     OPS_stencil_max += 10;
-    OPS_stencil_list = (ops_stencil *)realloc(
+    OPS_stencil_list = (ops_stencil *)ops_realloc(
         OPS_stencil_list, OPS_stencil_max * sizeof(ops_stencil));
 
     if (OPS_stencil_list == NULL) {
@@ -525,16 +538,16 @@ ops_stencil ops_decl_strided_stencil(int dims, int points, int *sten,
     }
   }
 
-  ops_stencil stencil = (ops_stencil)xmalloc(sizeof(ops_stencil_core));
+  ops_stencil stencil = (ops_stencil)ops_malloc(sizeof(ops_stencil_core));
   stencil->index = OPS_stencil_index;
   stencil->points = points;
   stencil->dims = dims;
   stencil->name = copy_str(name);
 
-  stencil->stencil = (int *)xmalloc(dims * points * sizeof(int));
+  stencil->stencil = (int *)ops_malloc(dims * points * sizeof(int));
   memcpy(stencil->stencil, sten, sizeof(int) * dims * points);
 
-  stencil->stride = (int *)xmalloc(dims * sizeof(int));
+  stencil->stride = (int *)ops_malloc(dims * sizeof(int));
   memcpy(stencil->stride, stride, sizeof(int) * dims);
 
   OPS_stencil_list[OPS_stencil_index++] = stencil;
@@ -594,7 +607,7 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
 ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[nhalos]) {
   if (OPS_halo_group_index == OPS_halo_group_max) {
     OPS_halo_group_max += 10;
-    OPS_halo_group_list = (ops_halo_group *)realloc(
+    OPS_halo_group_list = (ops_halo_group *)ops_realloc(
         OPS_halo_group_list, OPS_halo_group_max * sizeof(ops_halo_group));
 
     if (OPS_halo_group_list == NULL) {
@@ -603,11 +616,13 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[nhalos]) {
     }
   }
 
-  ops_halo_group grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
+  ops_halo_group grp = (ops_halo_group)ops_malloc(sizeof(ops_halo_group_core));
   grp->nhalos = nhalos;
 
+  // grp->halos = &halos[0];
+
   // make a copy
-  ops_halo *halos_temp = (ops_halo *)xmalloc(nhalos * sizeof(ops_halo));
+  ops_halo *halos_temp = (ops_halo *)ops_malloc(nhalos * sizeof(ops_halo));
   memcpy(halos_temp, &halos[0], nhalos * sizeof(ops_halo));
   grp->halos = halos_temp;
 
@@ -622,7 +637,7 @@ ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
 
   if (OPS_halo_group_index == OPS_halo_group_max) {
     OPS_halo_group_max += 10;
-    OPS_halo_group_list = (ops_halo_group *)realloc(
+    OPS_halo_group_list = (ops_halo_group *)ops_realloc(
         OPS_halo_group_list, OPS_halo_group_max * sizeof(ops_halo_group));
 
     if (OPS_halo_group_list == NULL) {
@@ -645,11 +660,11 @@ ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
   }*/
 
   if (grp == NULL) {
-    grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
+    grp = (ops_halo_group)ops_malloc(sizeof(ops_halo_group_core));
     grp->nhalos = 0;
     // printf("null grp, grp->nhalos = %d\n",grp->nhalos);
     if (nhalos != 0) {
-      ops_halo *halos_temp = (ops_halo *)xmalloc(1 * sizeof(ops_halo_core));
+      ops_halo *halos_temp = (ops_halo *)ops_malloc(1 * sizeof(ops_halo_core));
       memcpy(halos_temp, halos, 1 * sizeof(ops_halo_core));
       grp->halos = halos_temp;
       grp->nhalos++;
@@ -658,8 +673,8 @@ ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
     OPS_halo_group_list[OPS_halo_group_index++] = grp;
   } else {
     // printf("NON null grp, grp->nhalos = %d\n",grp->nhalos);
-    grp->halos = (ops_halo *)xrealloc(grp->halos, (grp->nhalos + 1) *
-                                                      sizeof(ops_halo_core));
+    grp->halos = (ops_halo *)ops_realloc(grp->halos, (grp->nhalos + 1) *
+                                                         sizeof(ops_halo_core));
     memcpy(&grp->halos[grp->nhalos], &halos[0], 1 * sizeof(ops_halo_core));
     grp->nhalos++;
   }
@@ -672,7 +687,7 @@ ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size,
   if (OPS_halo_index == OPS_halo_max) {
     OPS_halo_max += 10;
     OPS_halo_list =
-        (ops_halo *)realloc(OPS_halo_list, OPS_halo_max * sizeof(ops_halo));
+        (ops_halo *)ops_realloc(OPS_halo_list, OPS_halo_max * sizeof(ops_halo));
 
     if (OPS_halo_list == NULL) {
       printf("Error: ops_decl_halo_core -- error reallocating memory\n");
@@ -680,7 +695,7 @@ ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size,
     }
   }
 
-  ops_halo halo = (ops_halo)xmalloc(sizeof(ops_halo_core));
+  ops_halo halo = (ops_halo)ops_malloc(sizeof(ops_halo_core));
   halo->index = OPS_halo_index;
   halo->from = from;
   halo->to = to;
@@ -753,7 +768,7 @@ ops_reduction ops_decl_reduction_handle_core(int size, const char *type,
                                              const char *name) {
   if (OPS_reduction_index == OPS_reduction_max) {
     OPS_reduction_max += 10;
-    OPS_reduction_list = (ops_reduction *)realloc(
+    OPS_reduction_list = (ops_reduction *)ops_realloc(
         OPS_reduction_list, OPS_reduction_max * sizeof(ops_reduction));
 
     if (OPS_reduction_list == NULL) {
@@ -762,10 +777,10 @@ ops_reduction ops_decl_reduction_handle_core(int size, const char *type,
     }
   }
 
-  ops_reduction red = (ops_reduction)malloc(sizeof(ops_reduction_core));
+  ops_reduction red = (ops_reduction)ops_malloc(sizeof(ops_reduction_core));
   red->initialized = 0;
   red->size = size;
-  red->data = (char *)malloc(size * sizeof(char));
+  red->data = (char *)ops_malloc(size * sizeof(char));
   red->name = copy_str(name);
   red->type = copy_str(type);
   OPS_reduction_list[OPS_reduction_index] = red;
@@ -1093,7 +1108,7 @@ void ops_timing_output(FILE *stream) {
         printf("Too long\n");
       }
     }
-    char *buf = (char *)malloc((maxlen + 180) * sizeof(char));
+    char *buf = (char *)ops_malloc((maxlen + 180) * sizeof(char));
     char buf2[180];
     sprintf(buf, "Name");
     for (int i = 4; i < maxlen; i++)
@@ -1158,8 +1173,8 @@ void ops_timing_realloc(int kernel, const char *name) {
 
   if (kernel >= OPS_kern_max) {
     OPS_kern_max_new = kernel + 10;
-    OPS_kernels = (ops_kernel *)realloc(OPS_kernels,
-                                        OPS_kern_max_new * sizeof(ops_kernel));
+    OPS_kernels = (ops_kernel *)ops_realloc(
+        OPS_kernels, OPS_kern_max_new * sizeof(ops_kernel));
     if (OPS_kernels == NULL) {
       printf("Error: ops_timing_realloc error \n");
       exit(-1);
@@ -1176,7 +1191,7 @@ void ops_timing_realloc(int kernel, const char *name) {
 
   if (OPS_kernels[kernel].count == -1) {
     OPS_kernels[kernel].name =
-        (char *)malloc((strlen(name) + 1) * sizeof(char));
+        (char *)ops_malloc((strlen(name) + 1) * sizeof(char));
     strcpy(OPS_kernels[kernel].name, name);
     OPS_kernels[kernel].count = 0;
   }
@@ -1327,4 +1342,50 @@ void setKernelTime(int id, char name[], double kernelTime, double mpiTime,
   OPS_kernels[id].time += (float)kernelTime;
   OPS_kernels[id].mpi_time += (float)mpiTime;
   OPS_kernels[id].transfer += transfer;
+}
+
+void *ops_malloc(size_t size) {
+#ifdef __INTEL_COMPILER
+  // return _mm_malloc(size, OPS_ALIGNMENT);
+  return memalign(OPS_ALIGNMENT, size);
+#else
+  return xmalloc(size);
+#endif
+}
+
+void *ops_calloc(size_t num, size_t size) {
+#ifdef __INTEL_COMPILER
+  // void * ptr = _mm_malloc(num*size, OPS_ALIGNMENT);
+  void *ptr = memalign(OPS_ALIGNMENT, num * size);
+  memset(ptr, 0, num * size);
+  return ptr;
+#else
+  return xcalloc(num, size);
+#endif
+}
+
+void *ops_realloc(void *ptr, size_t size) {
+#ifdef __INTEL_COMPILER
+  void *newptr = xrealloc(ptr, size);
+  if (((unsigned long)newptr & (OPS_ALIGNMENT - 1)) != 0) {
+    void *newptr2 = memalign(OPS_ALIGNMENT, size);
+    // void *newptr2 = _mm_malloc(size, OPS_ALIGNMENT);
+    memcpy(newptr2, newptr, size);
+    free(newptr);
+    return newptr2;
+  } else {
+    return newptr;
+  }
+#else
+  return xrealloc(ptr, size);
+#endif
+}
+
+void ops_free(void *ptr) {
+#ifdef __INTEL_COMPILER
+  //_mm_free(ptr);
+  free(ptr);
+#else
+  free(ptr);
+#endif
 }

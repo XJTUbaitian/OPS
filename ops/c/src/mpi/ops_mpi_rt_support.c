@@ -229,15 +229,15 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
   if (send_recv_offsets[0] + send_size > ops_buffer_send_1_size) {
     if (OPS_diags > 4)
       printf("Realloc ops_buffer_send_1\n");
-    ops_buffer_send_1 = (char *)realloc(ops_buffer_send_1,
-                                        send_recv_offsets[0] + 4 * send_size);
+    ops_buffer_send_1 = (char *)ops_realloc(
+        ops_buffer_send_1, send_recv_offsets[0] + 4 * send_size);
     ops_buffer_send_1_size = send_recv_offsets[0] + 4 * send_size;
   }
   if (send_recv_offsets[1] + recv_size > ops_buffer_recv_1_size) {
     if (OPS_diags > 4)
       printf("Realloc ops_buffer_recv_1\n");
-    ops_buffer_recv_1 = (char *)realloc(ops_buffer_recv_1,
-                                        send_recv_offsets[1] + 4 * recv_size);
+    ops_buffer_recv_1 = (char *)ops_realloc(
+        ops_buffer_recv_1, send_recv_offsets[1] + 4 * recv_size);
     ops_buffer_recv_1_size = send_recv_offsets[0] + 4 * recv_size;
   }
 
@@ -302,15 +302,15 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
   if (send_recv_offsets[2] + send_size > ops_buffer_send_2_size) {
     if (OPS_diags > 4)
       printf("Realloc ops_buffer_send_2\n");
-    ops_buffer_send_2 = (char *)realloc(ops_buffer_send_2,
-                                        send_recv_offsets[2] + 4 * send_size);
+    ops_buffer_send_2 = (char *)ops_realloc(
+        ops_buffer_send_2, send_recv_offsets[2] + 4 * send_size);
     ops_buffer_send_2_size = send_recv_offsets[2] + 4 * send_size;
   }
   if (send_recv_offsets[3] + recv_size > ops_buffer_recv_2_size) {
     if (OPS_diags > 4)
       printf("Realloc ops_buffer_recv_2\n");
-    ops_buffer_recv_2 = (char *)realloc(ops_buffer_recv_2,
-                                        send_recv_offsets[3] + 4 * recv_size);
+    ops_buffer_recv_2 = (char *)ops_realloc(
+        ops_buffer_recv_2, send_recv_offsets[3] + 4 * recv_size);
     ops_buffer_recv_2_size = send_recv_offsets[3] + 4 * recv_size;
   }
 

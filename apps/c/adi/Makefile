@@ -25,7 +25,7 @@ ifdef CHECKPOINTING
 endif
 endif
 
-TRID_INSTALL_PATH := /home/mgiles/mudalige/TriDiagonal/Tridiag-Git/tridsolver/scalar/build
+TRID_INSTALL_PATH := /home/limingtao/localsoft/tridsolver/scalar/build
 TRID_INC := -I$(TRID_INSTALL_PATH)/include
 TRID_LIB := -L$(TRID_INSTALL_PATH)/lib
 
@@ -49,8 +49,8 @@ else
 endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -openmp -openmp-report2
-  INTEL_LIB = -L/opt/compilers/intel/intelPS-2015/lib/intel64/ -limf -lintlc -lsvml -lirng -liomp5 -lcilkrts
-  MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
+  INTEL_LIB = -L/opt/ -limf -lintlc -lsvml -lirng -liomp5 -lcilkrts
+  MPICPP  = $(MPI_INSTALL_PATH)/bin/mpiicpc
   MPIFLAGS  = $(CCFLAGS)
 else
 ifeq ($(OPS_COMPILER),mic)

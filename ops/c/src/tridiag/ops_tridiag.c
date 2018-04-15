@@ -94,10 +94,11 @@ void ops_tridMultiDimBatch_Inc(
     int *opts // indicates different algorithms to use -- not used for CPU
               // backends
     ) {
-
+/*
   tridDmtsvStridedBatchInc((const double *)a->data, (const double *)b->data,
                            (const double *)c->data, (double *)d->data,
                            (double *)u->data, ndim, solvedim, dims, dims);
+*/
 }
 #ifdef __cplusplus
 }

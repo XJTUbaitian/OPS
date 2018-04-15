@@ -53,8 +53,8 @@ else
 endif
   CXX 		:= icpc
   CXXFLAGS 	:= $(CCFLAGS)
-  MPICC 	:= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
-  MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPICC 	:= $(MPI_INSTALL_PATH)/bin/mpiicc -std=c99
+  MPICXX 	:= $(MPI_INSTALL_PATH)/bin/mpiicpc
   MPIFLAGS 	:= $(CXXFLAGS) -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
 else
 ifeq ($(OPS_COMPILER),mic)
@@ -146,8 +146,8 @@ else
   CHKCC			:= $(CC)
 endif
 
-TRID_INSTALL_PATH := /home/mgiles/mudalige/TriDiagonal/Tridiag-Git/tridsolver/scalar/build
-TRID_INC := -I$(TRID_INSTALL_PATH)/include
+TRID_INSTALL_PATH := /home/limingtao/localsoft/tridsolver/scalar/build
+TRID_INC := -I$(TRID_INSTALL_PATH)/include -I/home/limingtao/localsoft/tridsolver/scalar/src/cpu
 TRID_LIB := -L$(TRID_INSTALL_PATH)/lib
 
 .PHONY: clean mklib

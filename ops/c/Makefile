@@ -146,8 +146,8 @@ else
   CHKCC			:= $(CC)
 endif
 
-TRID_INSTALL_PATH := /home/limingtao/localsoft/tridsolver/scalar/build
-TRID_INC := -I$(TRID_INSTALL_PATH)/include -I/home/limingtao/localsoft/tridsolver/scalar/src/cpu
+TRID_INSTALL_PATH := $(HOME)/localsoft/tridsolver/scalar/build
+TRID_INC := -I$(TRID_INSTALL_PATH)/include -I$(HOME)/localsoft/tridsolver/scalar/src/cpu
 TRID_LIB := -L$(TRID_INSTALL_PATH)/lib
 
 .PHONY: clean mklib
